@@ -133,10 +133,8 @@ public class FilesetArchetypeCreator
 
         try
         {
-            Model pom = pomManager.readPom( FileUtils.resolveFile( basedir, Constants.ARCHETYPE_POM ) );
-
             File archetypePomFile =
-                createArchetypeProjectPom( project, localRepository, configurationProperties, outputDirectory, pom );
+                createArchetypeProjectPom( project, localRepository, configurationProperties, outputDirectory);
 
             File archetypeResourcesDirectory = new File( outputDirectory, getTemplateOutputDirectory() );
 
@@ -164,6 +162,7 @@ public class FilesetArchetypeCreator
 
             String packageName = configurationProperties.getProperty(Constants.PACKAGE);
 
+            Model pom = pomManager.readPom( FileUtils.resolveFile( basedir, Constants.ARCHETYPE_POM ) );
             List<String> fileNames = resolveFileNames( pom, basedir );
             if ( getLogger().isDebugEnabled() )
             {
@@ -329,12 +328,12 @@ public class FilesetArchetypeCreator
      * Create the archetype project pom.xml file, that will be used to build the archetype.
      */
     private File createArchetypeProjectPom(MavenProject project, ArtifactRepository localRepository,
-                                           Properties configurationProperties, File projectDir, Model pom)
+                                           Properties configurationProperties, File projectDir)
         throws TemplateCreationException, IOException
     {
         Model model = new Model();
-        model.setModelVersion( "4.0.0" );
-        model.setDistributionManagement(pom.getDistributionManagement());   // use the archetype pom's distribution as default - JLZ 1/18/11
+        model.setModelVersion("4.0.0");
+        model.setDistributionManagement(project.getDistributionManagement());   // use the project's distribution as default - JLZ 1/18/11
         // these values should be retrieved from the request with sensible defaults
         model.setGroupId( configurationProperties.getProperty( Constants.ARCHETYPE_GROUP_ID, project.getGroupId() ) );
         model.setArtifactId( configurationProperties.getProperty( Constants.ARCHETYPE_ARTIFACT_ID, project.getArtifactId() ) );
