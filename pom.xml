@@ -60,12 +60,26 @@ under the License.
     <url>http://jira.codehaus.org/browse/ARCHETYPE</url>
   </issueManagement>
 
-  <distributionManagement>
+  <!-- distributionManagement>
     <site>
       <id>apache.website</id>
       <url>scp://people.apache.org/www/maven.apache.org/archetype/</url>
     </site>
-  </distributionManagement>
+  </distributionManagement -->
+
+
+    <distributionManagement>
+        <repository>
+            <id>proofpoint</id>
+            <name>Proofpoint Releases</name>
+            <url>http://maven-tmphost.app.proofpoint.com:8082/nexus/content/repositories/proofpoint-eng</url>
+        </repository>
+        <snapshotRepository>
+            <id>proofpoint-snapshots</id>
+            <name>Proofpoint Snapshots</name>
+            <url>http://maven-tmphost.app.proofpoint.com:8082/nexus/content/repositories/proofpoint-eng-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
   <properties>
     <mavenVersion>2.0.8</mavenVersion><!-- with 2.0.9 proxy test fails-->
