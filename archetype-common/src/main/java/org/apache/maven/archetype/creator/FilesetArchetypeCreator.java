@@ -334,7 +334,7 @@ public class FilesetArchetypeCreator
     {
         Model model = new Model();
         model.setModelVersion( "4.0.0" );
-        model.setDistributionManagement(pom.getDistributionManagement());
+        model.setDistributionManagement(pom.getDistributionManagement());   // use the archetype pom's distribution as default - JLZ 1/18/11
         // these values should be retrieved from the request with sensible defaults
         model.setGroupId( configurationProperties.getProperty( Constants.ARCHETYPE_GROUP_ID, project.getGroupId() ) );
         model.setArtifactId( configurationProperties.getProperty( Constants.ARCHETYPE_ARTIFACT_ID, project.getArtifactId() ) );
