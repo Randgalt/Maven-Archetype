@@ -35,8 +35,6 @@ import org.codehaus.plexus.util.PropertyUtils;
 import org.codehaus.plexus.util.StringUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -76,6 +74,13 @@ public class CreateArchetypeFromProjectMojo
      * @parameter expression="${archetype.filteredExtentions}"
      */
     private String archetypeFilteredExtentions;
+
+    /**
+     * File extensions which are excluded from a project
+     *
+     * @parameter expression="${archetype.excludedExtentions}"
+     */
+    private String archetypeExcludedExtentions;
 
     /**
      * Directory names which are checked for project's sources main package.
@@ -186,6 +191,8 @@ public class CreateArchetypeFromProjectMojo
 
             List<String> filtereds = getFilteredExtensions( archetypeFilteredExtentions, propertyFile );
 
+            List<String> excludeds = getExcludedExtensions( archetypeExcludedExtentions, propertyFile );
+
             ArchetypeCreationRequest request = new ArchetypeCreationRequest()
                 .setProject( project )
                 /* Used when in interactive mode */
@@ -193,6 +200,7 @@ public class CreateArchetypeFromProjectMojo
                 .setLanguages( languages )
                 /* Should be refactored to use some ant patterns */
                 .setFiltereds( filtereds )
+                .setExcludeds( excludeds )
                 /* This should be correctly handled */
                 .setPreserveCData( preserveCData )
                 .setKeepParent( keepParent )
@@ -237,6 +245,33 @@ public class CreateArchetypeFromProjectMojo
         {
             throw new MojoFailureException( ex, ex.getMessage(), ex.getMessage() );
         }
+    }
+
+    private List<String> getExcludedExtensions( String archetypeExcludedExtentions, File propertyFile )
+    {
+        List<String> excludedExtensions = new ArrayList<String>();
+
+        if ( StringUtils.isNotEmpty( archetypeExcludedExtentions ) )
+        {
+            excludedExtensions.addAll( Arrays.asList( StringUtils.split( archetypeExcludedExtentions, "," ) ) );
+
+            getLog().debug( "Found in command line extensions = " + excludedExtensions );
+        }
+
+        if ( excludedExtensions.isEmpty() && propertyFile != null && propertyFile.exists() )
+        {
+            Properties properties = PropertyUtils.loadProperties( propertyFile );
+
+            String extensions = properties.getProperty( Constants.ARCHETYPE_EXCLUDED_EXTENSIONS );
+            if ( StringUtils.isNotEmpty( extensions ) )
+            {
+                excludedExtensions.addAll( Arrays.asList( StringUtils.split( extensions, "," ) ) );
+            }
+
+            getLog().debug( "Found in propertyFile " + propertyFile.getName() + " extensions = " + excludedExtensions );
+        }
+
+        return excludedExtensions;
     }
 
     private List<String> getFilteredExtensions( String archetypeFilteredExtentions, File propertyFile )

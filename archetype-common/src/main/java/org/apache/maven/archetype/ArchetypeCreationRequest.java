@@ -40,6 +40,8 @@ public class ArchetypeCreationRequest
 
     private List<String> filtereds = new ArrayList<String>();
 
+    private List<String> excludeds = new ArrayList<String>();
+
     private String defaultEncoding = "UTF-8";
 
     private boolean preserveCData = false;
@@ -126,6 +128,18 @@ public class ArchetypeCreationRequest
     public ArchetypeCreationRequest setFiltereds( List<String> filtereds )
     {
         this.filtereds = filtereds;
+
+        return this;
+    }
+
+    public List<String> getExcludeds()
+    {
+        return excludeds;
+    }
+
+    public ArchetypeCreationRequest setExcludeds( List<String> excludeds )
+    {
+        this.excludeds = excludeds;
 
         return this;
     }
