@@ -50,13 +50,13 @@ public class DefaultArchetypeFilesResolver
         return scanner.scan( files );
     }
 
-    public List<String> getFilteredFiles( List<String> files, String filtered )
+    public List<String> getFilteredFiles(List<String> files, String filtered, String excluded)
     {
         ListScanner scanner = new ListScanner();
         scanner.setBasedir( "" );
 
         scanner.setIncludes( filtered );
-        scanner.setExcludes( "" );
+        scanner.setExcludes( excluded );
 
         List<String> result = scanner.scan( files );
         getLogger().debug( "Scanned " + result.size() + " filtered files in " + files.size() + " files" );
@@ -78,7 +78,7 @@ public class DefaultArchetypeFilesResolver
         return scanner.scan( archetypeResources );
     }
 
-    public List<String> findOtherResources( int level, List<String> files, String languages )
+    public List<String> findOtherResources(int level, List<String> files, String languages, String excludes)
     {
         ListScanner scanner = new ListScanner();
 
@@ -90,8 +90,20 @@ public class DefaultArchetypeFilesResolver
             includes += "*/";
         }
 
+        if ( excludes != null && excludes.length() > 0 )
+        {
+            if ( languages != null && languages.length() > 0 )
+            {
+                excludes += "," + languages;
+            }
+        }
+        else
+        {
+            excludes = languages;
+        }
+
         scanner.setIncludes( includes + "**" );
-        scanner.setExcludes( languages );
+        scanner.setExcludes( excludes );
 
         List<String> result = scanner.scan( files );
         getLogger().debug(

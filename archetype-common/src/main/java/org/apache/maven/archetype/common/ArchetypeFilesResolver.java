@@ -32,11 +32,11 @@ public interface ArchetypeFilesResolver
 
     List<String> getFilesWithExtension( List<String> files, String extension );
 
-    List<String> getFilteredFiles( List<String> files, String filtered );
+    List<String> getFilteredFiles(List<String> files, String filtered, String excludedList);
 
     List<String> filterFiles( String moduleOffset, FileSet fileSet, List<String> archetypeResources );
 
-    List<String> findOtherResources( int level, List<String> files, String languages );
+    List<String> findOtherResources(int level, List<String> files, String languages, String excludes);
 
     List<String> findOtherResources( int level, List<String> files, List<String> sourcesFiles, String languages );
 

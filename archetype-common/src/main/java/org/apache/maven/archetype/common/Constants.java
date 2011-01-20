@@ -46,6 +46,8 @@ public interface Constants
 
     String ARCHETYPE_FILTERED_EXTENSIONS = "archetype.filteredExtensions";
 
+    String ARCHETYPE_EXCLUDED_EXTENSIONS = "archetype.excludedExtensions";
+
     String ARCHETYPE_LANGUAGES = "archetype.languages";
 
     List<String> DEFAULT_FILTERED_EXTENSIONS =

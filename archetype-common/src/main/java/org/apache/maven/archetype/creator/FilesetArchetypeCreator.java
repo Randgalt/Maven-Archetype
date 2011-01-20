@@ -104,6 +104,7 @@ public class FilesetArchetypeCreator
         MavenProject project = request.getProject();
         List<String> languages = request.getLanguages();
         List<String> filtereds = request.getFiltereds();
+        List<String> excludeds = request.getExcludeds();
         String defaultEncoding = request.getDefaultEncoding();
         boolean preserveCData = request.isPreserveCData();
         boolean keepParent = request.isKeepParent();
@@ -174,7 +175,7 @@ public class FilesetArchetypeCreator
                 }
             }
 
-            List<FileSet> filesets = resolveFileSets( packageName, fileNames, languages, filtereds, defaultEncoding );
+            List<FileSet> filesets = resolveFileSets( packageName, fileNames, languages, filtereds, excludeds, defaultEncoding );
             getLogger().debug( "Resolved filesets for " + archetypeDescriptor.getName() );
 
             archetypeDescriptor.setFileSets( filesets );
@@ -201,7 +202,7 @@ public class FilesetArchetypeCreator
                     createModule( reverseProperties, rootArtifactId, moduleId, packageName,
                                   FileUtils.resolveFile( basedir, moduleId ),
                                   new File( archetypeFilesDirectory, moduleIdDirectory ), languages,
-                                  filtereds, defaultEncoding, preserveCData, keepParent );
+                                  filtereds, excludeds, defaultEncoding, preserveCData, keepParent );
 
                 archetypeDescriptor.addModule( moduleDescriptor );
 
@@ -984,7 +985,7 @@ public class FilesetArchetypeCreator
 
     private ModuleDescriptor createModule( Properties reverseProperties, String rootArtifactId, String moduleId,
                                            String packageName, File basedir, File archetypeFilesDirectory,
-                                           List languages, List filtereds, String defaultEncoding,
+                                           List languages, List filtereds, List excludeds, String defaultEncoding,
                                            boolean preserveCData, boolean keepParent )
         throws IOException, XmlPullParserException
     {
@@ -1017,7 +1018,7 @@ public class FilesetArchetypeCreator
 
         List fileNames = resolveFileNames( pom, basedir );
 
-        List filesets = resolveFileSets( packageName, fileNames, languages, filtereds, defaultEncoding );
+        List filesets = resolveFileSets( packageName, fileNames, languages, filtereds, excludeds, defaultEncoding );
         getLogger().debug( "Resolved filesets for module " + archetypeDescriptor.getName() );
 
         archetypeDescriptor.setFileSets( filesets );
@@ -1045,7 +1046,7 @@ public class FilesetArchetypeCreator
                 createModule( reverseProperties, rootArtifactId, subModuleId, packageName,
                               FileUtils.resolveFile( basedir, subModuleId ),
                               FileUtils.resolveFile( archetypeFilesDirectory, subModuleIdDirectory ), languages,
-                              filtereds, defaultEncoding, preserveCData, keepParent );
+                              filtereds, excludeds, defaultEncoding, preserveCData, keepParent );
 
             archetypeDescriptor.addModule( moduleDescriptor );
 
@@ -1234,13 +1235,13 @@ public class FilesetArchetypeCreator
 
         List<FileSet> packagedFileSets = new ArrayList<FileSet>();
         List<String> packagedFiles = archetypeFilesResolver.getPackagedFiles( groupFiles, packageAsDir );
-        getLogger().debug( "Found packaged Files:" + packagedFiles );
+        getLogger().debug("Found packaged Files:" + packagedFiles);
 
         List<String> unpackagedFiles = archetypeFilesResolver.getUnpackagedFiles( groupFiles, packageAsDir );
         getLogger().debug( "Found unpackaged Files:" + unpackagedFiles );
 
         Set<String> packagedExtensions = getExtensions( packagedFiles );
-        getLogger().debug( "Found packaged extensions " + packagedExtensions );
+        getLogger().debug("Found packaged extensions " + packagedExtensions);
 
         Set<String> unpackagedExtensions = getExtensions( unpackagedFiles );
 
@@ -1373,12 +1374,12 @@ public class FilesetArchetypeCreator
     }
 
     private List<FileSet> resolveFileSets( String packageName, List<String> fileNames, List<String> languages,
-                                           List<String> filtereds, String defaultEncoding )
+                                           List<String> filtereds, List<String> excludeds, String defaultEncoding )
     {
         List<FileSet> resolvedFileSets = new ArrayList<FileSet>();
         getLogger().debug(
                            "Resolving filesets with package=" + packageName + ", languages=" + languages
-                               + " and extentions=" + filtereds );
+                               + " and extentions=" + filtereds + " and excludeds=" + excludeds );
 
         List<String> files = new ArrayList<String>( fileNames );
 
@@ -1401,14 +1402,23 @@ public class FilesetArchetypeCreator
 
         getLogger().debug( "Using filtered includes " + filteredIncludes );
 
+        String excludedList = "";
+        for ( String excluded : excludeds )
+        {
+            excludedList +=
+                ( ( excludedList.length() == 0 ) ? "" : "," ) + excluded;
+        }
+
+        getLogger().debug( "Using excluded list " + excludedList );
+
         /* sourcesMainFiles */
         List<String> sourcesMainFiles = archetypeFilesResolver.findSourcesMainFiles( files, languageIncludes );
         if ( !sourcesMainFiles.isEmpty() )
         {
             files.removeAll( sourcesMainFiles );
 
-            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( sourcesMainFiles, filteredIncludes );
-            sourcesMainFiles.removeAll( filteredFiles );
+            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( sourcesMainFiles, filteredIncludes, excludedList );
+            sourcesMainFiles.removeAll(filteredFiles);
 
             List<String> unfilteredFiles = sourcesMainFiles;
             if ( !filteredFiles.isEmpty() )
@@ -1426,9 +1436,9 @@ public class FilesetArchetypeCreator
         List<String> resourcesMainFiles = archetypeFilesResolver.findResourcesMainFiles( files, languageIncludes );
         if ( !resourcesMainFiles.isEmpty() )
         {
-            files.removeAll( resourcesMainFiles );
+            files.removeAll(resourcesMainFiles);
 
-            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( resourcesMainFiles, filteredIncludes );
+            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( resourcesMainFiles, filteredIncludes, excludedList);
             resourcesMainFiles.removeAll( filteredFiles );
 
             List<String> unfilteredFiles = resourcesMainFiles;
@@ -1448,7 +1458,7 @@ public class FilesetArchetypeCreator
         {
             files.removeAll( sourcesTestFiles );
 
-            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( sourcesTestFiles, filteredIncludes );
+            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( sourcesTestFiles, filteredIncludes, excludedList);
             sourcesTestFiles.removeAll( filteredFiles );
 
             List<String> unfilteredFiles = sourcesTestFiles;
@@ -1468,7 +1478,7 @@ public class FilesetArchetypeCreator
         {
             files.removeAll( resourcesTestFiles );
 
-            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( resourcesTestFiles, filteredIncludes );
+            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( resourcesTestFiles, filteredIncludes, excludedList);
             resourcesTestFiles.removeAll( filteredFiles );
 
             List<String> unfilteredFiles = resourcesTestFiles;
@@ -1488,7 +1498,7 @@ public class FilesetArchetypeCreator
         {
             files.removeAll( siteFiles );
 
-            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( siteFiles, filteredIncludes );
+            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( siteFiles, filteredIncludes, excludedList);
             siteFiles.removeAll( filteredFiles );
 
             List<String> unfilteredFiles = siteFiles;
@@ -1508,7 +1518,7 @@ public class FilesetArchetypeCreator
         {
             files.removeAll( thirdLevelSourcesfiles );
 
-            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( thirdLevelSourcesfiles, filteredIncludes );
+            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( thirdLevelSourcesfiles, filteredIncludes, excludedList);
             thirdLevelSourcesfiles.removeAll( filteredFiles );
 
             List<String> unfilteredFiles = thirdLevelSourcesfiles;
@@ -1527,7 +1537,7 @@ public class FilesetArchetypeCreator
             if ( !thirdLevelResourcesfiles.isEmpty() )
             {
                 files.removeAll( thirdLevelResourcesfiles );
-                filteredFiles = archetypeFilesResolver.getFilteredFiles( thirdLevelResourcesfiles, filteredIncludes );
+                filteredFiles = archetypeFilesResolver.getFilteredFiles( thirdLevelResourcesfiles, filteredIncludes, excludedList);
                 thirdLevelResourcesfiles.removeAll( filteredFiles );
                 unfilteredFiles = thirdLevelResourcesfiles;
                 if ( !filteredFiles.isEmpty() )
@@ -1549,7 +1559,7 @@ public class FilesetArchetypeCreator
         {
             files.removeAll( secondLevelSourcesfiles );
 
-            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( secondLevelSourcesfiles, filteredIncludes );
+            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( secondLevelSourcesfiles, filteredIncludes, excludedList);
             secondLevelSourcesfiles.removeAll( filteredFiles );
 
             List<String> unfilteredFiles = secondLevelSourcesfiles;
@@ -1564,12 +1574,12 @@ public class FilesetArchetypeCreator
         }
 
         /* secondLevelResourcesfiles */
-        List<String> secondLevelResourcesfiles = archetypeFilesResolver.findOtherResources( 2, files, languageIncludes );
+        List<String> secondLevelResourcesfiles = archetypeFilesResolver.findOtherResources( 2, files, languageIncludes, excludedList);
         if ( !secondLevelResourcesfiles.isEmpty() )
         {
             files.removeAll( secondLevelResourcesfiles );
 
-            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( secondLevelResourcesfiles, filteredIncludes );
+            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( secondLevelResourcesfiles, filteredIncludes, excludedList);
             secondLevelResourcesfiles.removeAll( filteredFiles );
 
             List<String> unfilteredFiles = secondLevelResourcesfiles;
@@ -1584,12 +1594,12 @@ public class FilesetArchetypeCreator
         }
 
         /* rootResourcesfiles */
-        List<String> rootResourcesfiles = archetypeFilesResolver.findOtherResources( 0, files, languageIncludes );
+        List<String> rootResourcesfiles = archetypeFilesResolver.findOtherResources( 0, files, languageIncludes, excludedList);
         if ( !rootResourcesfiles.isEmpty() )
         {
             files.removeAll( rootResourcesfiles );
 
-            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( rootResourcesfiles, filteredIncludes );
+            List<String> filteredFiles = archetypeFilesResolver.getFilteredFiles( rootResourcesfiles, filteredIncludes, excludedList);
             rootResourcesfiles.removeAll( filteredFiles );
 
             List<String> unfilteredFiles = rootResourcesfiles;
