@@ -27,21 +27,19 @@ import org.apache.maven.archetype.common.Constants;
 import org.apache.maven.archetype.ui.ArchetypeCreationConfigurator;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.IOUtil;
+import org.apache.maven.project.MavenProjectBuilder;
+import org.apache.maven.project.ProjectBuildingException;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.PropertyUtils;
-import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,6 +57,9 @@ import java.util.Properties;
 public class CreateArchetypeFromProjectMojo
     extends AbstractMojo
 {
+    /** @component */
+    private MavenProjectBuilder projectBuilder;
+
     /** @component */
     ArchetypeCreationConfigurator configurator;
 
@@ -244,6 +245,7 @@ public class CreateArchetypeFromProjectMojo
                 throw new MojoFailureException( result.getCause(), result.getCause().getMessage(),
                                                 result.getCause().getMessage() );
             }
+getLog().info("4============");
 
             getLog().info( "Archetype created in " + outputDirectory );
 
@@ -272,32 +274,10 @@ public class CreateArchetypeFromProjectMojo
     }
 
     private MavenProject loadSourceDirectory()
-            throws IOException, XmlPullParserException
+            throws IOException, XmlPullParserException, ComponentLookupException, ProjectBuildingException
     {
-        Reader pomReader = null;
-        try
-        {
-            final File pomFile = new File(sourceDirectory, Constants.ARCHETYPE_POM);
-            pomReader = ReaderFactory.newXmlReader(pomFile);
-
-            MavenXpp3Reader reader = new MavenXpp3Reader();
-
-            Model model = reader.read(pomReader);
-            // TODO - validations?
-
-            return new MavenProject(model)
-            {
-                @Override
-                public File getFile()
-                {
-                    return pomFile;
-                }
-            };
-        }
-        finally
-        {
-            IOUtil.close(pomReader);
-        }
+        final File pomFile = new File(sourceDirectory, Constants.ARCHETYPE_POM);
+        return projectBuilder.build(pomFile, localRepository, null);
     }
 
     private List<String> getExcludedExtensions( String archetypeExcludedExtentions, File propertyFile )
