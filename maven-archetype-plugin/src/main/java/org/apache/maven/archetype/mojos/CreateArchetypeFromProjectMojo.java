@@ -27,14 +27,21 @@ import org.apache.maven.archetype.common.Constants;
 import org.apache.maven.archetype.ui.ArchetypeCreationConfigurator;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.PropertyUtils;
+import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.StringUtils;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -81,6 +88,13 @@ public class CreateArchetypeFromProjectMojo
      * @parameter expression="${archetype.excludedExtentions}"
      */
     private String archetypeExcludedExtentions;
+
+    /**
+     * File extensions which are excluded from a project
+     *
+     * @parameter expression="${sourceDirectory}"
+     */
+    private String sourceDirectory;
 
     /**
      * Directory names which are checked for project's sources main package.
@@ -183,10 +197,20 @@ public class CreateArchetypeFromProjectMojo
                 propertyFile.getParentFile().mkdirs();
             }
 
+            MavenProject        sourceProject;
+            if ( sourceDirectory != null )
+            {
+                sourceProject = loadSourceDirectory();
+            }
+            else
+            {
+                sourceProject = project;
+            }
+
             List<String> languages = getLanguages( archetypeLanguages, propertyFile );
 
             Properties properties =
-                configurator.configureArchetypeCreation( project, Boolean.valueOf( interactive ), executionProperties,
+                configurator.configureArchetypeCreation( sourceProject, Boolean.valueOf( interactive ), executionProperties,
                                                          propertyFile, languages );
 
             List<String> filtereds = getFilteredExtensions( archetypeFilteredExtentions, propertyFile );
@@ -194,7 +218,7 @@ public class CreateArchetypeFromProjectMojo
             List<String> excludeds = getExcludedExtensions( archetypeExcludedExtentions, propertyFile );
 
             ArchetypeCreationRequest request = new ArchetypeCreationRequest()
-                .setProject( project )
+                .setProject( sourceProject )
                 /* Used when in interactive mode */
                 .setProperties( properties )
                 .setLanguages( languages )
@@ -244,6 +268,35 @@ public class CreateArchetypeFromProjectMojo
         catch ( Exception ex )
         {
             throw new MojoFailureException( ex, ex.getMessage(), ex.getMessage() );
+        }
+    }
+
+    private MavenProject loadSourceDirectory()
+            throws IOException, XmlPullParserException
+    {
+        Reader pomReader = null;
+        try
+        {
+            final File pomFile = new File(sourceDirectory, Constants.ARCHETYPE_POM);
+            pomReader = ReaderFactory.newXmlReader(pomFile);
+
+            MavenXpp3Reader reader = new MavenXpp3Reader();
+
+            Model model = reader.read(pomReader);
+            // TODO - validations?
+
+            return new MavenProject(model)
+            {
+                @Override
+                public File getFile()
+                {
+                    return pomFile;
+                }
+            };
+        }
+        finally
+        {
+            IOUtil.close(pomReader);
         }
     }
 
