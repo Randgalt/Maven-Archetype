@@ -164,6 +164,9 @@ public class FilesetArchetypeCreator
             String packageName = configurationProperties.getProperty(Constants.PACKAGE);
 
             Model pom = pomManager.readPom( FileUtils.resolveFile( basedir, Constants.ARCHETYPE_POM ) );
+
+            updateMainClass(pom, packageName);
+
             List<String> fileNames = resolveFileNames( pom, basedir );
             if ( getLogger().isDebugEnabled() )
             {
@@ -247,6 +250,19 @@ public class FilesetArchetypeCreator
         catch ( Exception e )
         {
             result.setCause( e );
+        }
+    }
+
+    private void updateMainClass(Model pom, String packageName)
+    {
+        String mainClass = pom.getProperties().getProperty("main-class");
+        if ( (packageName != null) && (packageName.length() > 0) && (mainClass != null) && (mainClass.length() > 0) )
+        {
+            if ( mainClass.startsWith(packageName) && (mainClass.length() > packageName.length()) )
+            {
+                String  updatedValue = "${" + Constants.PACKAGE + "}" + mainClass.substring(packageName.length());
+                pom.getProperties().setProperty("main-class", updatedValue);    // TODO - should this be changed somewhere else? This works, but maybe the pom should remain pristine
+            }
         }
     }
 

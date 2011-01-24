@@ -80,7 +80,6 @@ public class DefaultArchetypeCreationConfigurator
             archetypeConfiguration =
                 defineDefaultConfiguration( project, archetypeDefinition, resolvedPackage, properties );
         }
-
         if ( interactiveMode.booleanValue() )
         {
             getLogger().debug( "Entering interactive mode" );

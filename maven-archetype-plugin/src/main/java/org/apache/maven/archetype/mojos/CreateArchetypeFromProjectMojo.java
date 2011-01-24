@@ -245,7 +245,6 @@ public class CreateArchetypeFromProjectMojo
                 throw new MojoFailureException( result.getCause(), result.getCause().getMessage(),
                                                 result.getCause().getMessage() );
             }
-getLog().info("4============");
 
             getLog().info( "Archetype created in " + outputDirectory );
 
