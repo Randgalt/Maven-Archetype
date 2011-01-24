@@ -207,7 +207,6 @@ public class CreateArchetypeFromProjectMojo
             {
                 sourceProject = project;
             }
-
             List<String> languages = getLanguages( archetypeLanguages, propertyFile );
 
             Properties properties =

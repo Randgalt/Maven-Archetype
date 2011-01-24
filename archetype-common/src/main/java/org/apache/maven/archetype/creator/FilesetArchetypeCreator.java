@@ -904,6 +904,7 @@ public class FilesetArchetypeCreator
             pom.setGroupId( "${" + Constants.GROUP_ID + "}" );
             pom.setArtifactId( "${" + Constants.ARTIFACT_ID + "}" );
             pom.setVersion( "${" + Constants.VERSION + "}" );
+            pom.setName( "${" + Constants.ARTIFACT_ID + "}" );
 
             rewriteReferences( pom, pomReversedProperties.getProperty( Constants.ARTIFACT_ID ),
                                pomReversedProperties.getProperty( Constants.GROUP_ID ) );
